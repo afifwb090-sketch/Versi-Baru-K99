@@ -1,0 +1,6 @@
+{
+  "name": "K99 POS System - Kopi 99 Warungboto",
+  "description": "Sistem Point of Sale (POS) modern, manajemen resep & HPP, inventaris bahan baku, kasir offline, penjualan online, dan website pemesanan Kopi 99 Warungboto Yogyakarta.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
