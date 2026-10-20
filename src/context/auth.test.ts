@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { STAFF_ACCOUNTS } from './AuthContext.tsx';
+import { isSupabaseValid } from '../services/supabase.ts';
 
 test('STAFF_ACCOUNTS provides valid accounts for all required roles', () => {
   const roles = ['owner', 'manager', 'cashier', 'inventory_staff'] as const;
@@ -28,4 +29,17 @@ test('Owner and Cashier roles have expected credentials', () => {
 
   assert.equal(STAFF_ACCOUNTS.cashier.pin, '1234');
   assert.equal(STAFF_ACCOUNTS.cashier.email, 'kasir@kopi99warungboto.id');
+});
+
+test('isSupabaseValid properly validates URL and Anon Key', () => {
+  assert.equal(isSupabaseValid('', ''), false);
+  assert.equal(isSupabaseValid('https://your-project-id.supabase.co', 'eyJ...'), false);
+  assert.equal(isSupabaseValid('https://abcdefghijkl.supabase.co', 'short-key'), false);
+  assert.equal(
+    isSupabaseValid(
+      'https://abcdefghijkl.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.abcdefghijklmn1234567890'
+    ),
+    true
+  );
 });
