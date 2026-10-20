@@ -10,6 +10,8 @@ import {
   Menu,
   Store,
   Power,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { dataService } from '../../services/dataService';
 
@@ -27,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isPublicMode,
   setIsPublicMode,
 }) => {
-  const { currentRole, setRole, isSupabaseLive } = useAuth();
+  const { currentRole, currentUser, setRole, isSupabaseLive, logout } = useAuth();
   const [settings, setSettings] = useState<BusinessSettings>(dataService.getSettings());
   const activeShift = dataService.getActiveShift();
 
@@ -45,29 +47,34 @@ export const Navbar: React.FC<NavbarProps> = ({
     dataService.updateSettings({ is_store_open: nextState });
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setIsPublicMode(true);
+  };
+
   return (
-    <header className="h-16 bg-slate-900 border-b border-slate-800 text-white flex items-center justify-between px-4 sticky top-0 z-40 select-none">
-      <div className="flex items-center gap-3">
+    <header className="h-16 bg-slate-900 border-b border-slate-800 text-white flex items-center justify-between px-3 sm:px-4 sticky top-0 z-40 select-none">
+      <div className="flex items-center gap-2 sm:gap-3">
         <button
           onClick={onToggleSidebar}
           aria-label="Toggle Sidebar Menu"
-          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition lg:hidden"
+          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition lg:hidden cursor-pointer"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('pos')}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-600/20 font-bold text-white text-lg tracking-wider">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-600/20 font-bold text-white text-base sm:text-lg tracking-wider">
             99
           </div>
           <div className="hidden sm:block">
-            <div className="font-bold text-base tracking-tight flex items-center gap-1.5">
+            <div className="font-bold text-sm sm:text-base tracking-tight flex items-center gap-1.5">
               <span>{settings.business_name}</span>
               <span className="text-xs px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-400 border border-blue-500/30 font-medium">
-                POS
+                Admin POS
               </span>
             </div>
-            <p className="text-xs text-slate-400 flex items-center gap-1">
+            <p className="text-[11px] text-slate-400 flex items-center gap-1">
               <span>Warungboto, Umbulharjo, Yogyakarta</span>
             </p>
           </div>
@@ -79,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={handleToggleStoreOpen}
           aria-label="Toggle Status Kedai Buka atau Tutup"
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition ${
+          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-bold border transition cursor-pointer ${
             settings.is_store_open
               ? 'bg-emerald-950/70 text-emerald-300 border-emerald-600 hover:bg-emerald-900'
               : 'bg-rose-950/70 text-rose-300 border-rose-600 hover:bg-rose-900'
@@ -91,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           }
         >
           <span className={`w-2 h-2 rounded-full ${settings.is_store_open ? 'bg-emerald-400 animate-ping' : 'bg-rose-500'}`} />
-          <span className="hidden sm:inline">Kedai:</span>
+          <span className="hidden md:inline">Status Kedai:</span>
           <span>{settings.is_store_open ? 'BUKA' : 'TUTUP'}</span>
         </button>
 
@@ -99,15 +106,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={() => setActiveTab('settings')}
           aria-label="Status Database Supabase"
-          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition ${
+          className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition ${
             isSupabaseLive
               ? 'bg-emerald-950/60 text-emerald-400 border-emerald-700 hover:bg-emerald-900/80'
               : 'bg-amber-950/60 text-amber-300 border-amber-700 hover:bg-amber-900/80'
           }`}
-          title={isSupabaseLive ? 'Supabase PostgreSQL Terhubung' : 'Supabase perlu dikonfigurasi. Klik untuk setup'}
+          title={isSupabaseLive ? 'Supabase PostgreSQL Terhubung' : 'Supabase offline/belum setup'}
         >
           <Database className="w-3.5 h-3.5" />
-          <span>{isSupabaseLive ? 'Supabase Live' : 'Setup Supabase'}</span>
+          <span>{isSupabaseLive ? 'Supabase Live' : 'Setup DB'}</span>
           <span className={`w-2 h-2 rounded-full animate-pulse ${isSupabaseLive ? 'bg-emerald-400' : 'bg-amber-400'}`} />
         </button>
 
@@ -132,18 +139,27 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         )}
 
-        {/* View Toggle: Admin POS vs Public Website */}
+        {/* View Public Website */}
         <button
-          onClick={() => setIsPublicMode(!isPublicMode)}
+          onClick={() => setIsPublicMode(true)}
           aria-label="Lihat Website Pemesanan Publik"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-xs transition cursor-pointer"
+          title="Buka Website Landing Page Pelanggan"
         >
-          <ExternalLink className="w-3.5 h-3.5" />
-          <span className="font-semibold">{isPublicMode ? 'Kembali ke POS' : 'Website Publik'}</span>
+          <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
+          <span className="hidden sm:inline">Lihat</span>
+          <span>Web Publik</span>
         </button>
 
-        {/* Role Switcher */}
+        {/* Active Staff Info & Role Switcher */}
         <div className="relative flex items-center gap-1.5 pl-2 border-l border-slate-700">
+          <div className="hidden xl:flex flex-col text-right">
+            <span className="text-xs font-bold text-slate-200 leading-tight truncate max-w-[120px]">
+              {currentUser?.full_name?.split(' ')[0] || 'Staf'}
+            </span>
+            <span className="text-[10px] text-amber-400 capitalize">{currentRole}</span>
+          </div>
+
           <ShieldCheck className="w-4 h-4 text-slate-400" />
           <select
             value={currentRole}
@@ -151,12 +167,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             aria-label="Pilih Role Pengguna"
             className="text-xs bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
           >
-            <option value="owner">Owner / Admin</option>
-            <option value="manager">Manager Bar</option>
+            <option value="owner">Owner</option>
+            <option value="manager">Manager</option>
             <option value="cashier">Kasir</option>
-            <option value="inventory_staff">Staf Gudang</option>
+            <option value="inventory_staff">Gudang</option>
           </select>
         </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          aria-label="Keluar / Logout dari POS"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-800/80 transition cursor-pointer"
+          title="Keluar dari Panel Admin POS"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Keluar</span>
+        </button>
       </div>
     </header>
   );

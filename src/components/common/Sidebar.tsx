@@ -30,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile,
 }) => {
-  const { currentRole } = useAuth();
+  const { currentRole, currentUser } = useAuth();
 
   const navItems = [
     {
@@ -176,12 +176,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/40">
-          <div className="text-[11px] text-slate-400 font-medium">
-            K99 POS v1.0.0
+        <div className="p-3 border-t border-slate-800 bg-slate-950/70 space-y-2">
+          <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
+            <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xs shrink-0">
+              {currentUser?.full_name?.charAt(0) || 'S'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-white truncate">
+                {currentUser?.full_name || 'Staf Kasir'}
+              </div>
+              <div className="text-[10px] text-amber-400 font-medium capitalize">
+                Role: {currentRole}
+              </div>
+            </div>
           </div>
-          <div className="text-[11px] text-slate-500">
-            Kopi 99 Warungboto, DIY
+
+          <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 pt-1">
+            <span>K99 POS v1.0.0</span>
+            <span>Warungboto, DIY</span>
           </div>
         </div>
       </aside>

@@ -26,6 +26,12 @@ import {
   AlertCircle,
   AlertTriangle,
   Power,
+  Lock,
+  Star,
+  Users,
+  Award,
+  Wifi,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface PublicCartItem {
@@ -38,7 +44,10 @@ interface PublicCartItem {
   notes: string;
 }
 
-export const PublicWebsite: React.FC<{ onReturnToAdmin: () => void }> = ({ onReturnToAdmin }) => {
+export const PublicWebsite: React.FC<{
+  onReturnToAdmin?: () => void;
+  onOpenLogin: () => void;
+}> = ({ onReturnToAdmin, onOpenLogin }) => {
   const [settings, setSettings] = useState<BusinessSettings>(dataService.getSettings());
   const [products, setProducts] = useState<Product[]>(
     dataService.getProducts(true).filter((p) => p.is_online_available)
@@ -316,13 +325,14 @@ export const PublicWebsite: React.FC<{ onReturnToAdmin: () => void }> = ({ onRet
               )}
             </button>
 
-            {/* Back to Admin Mode */}
+            {/* Staff / Admin POS Login Button */}
             <button
-              onClick={onReturnToAdmin}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-semibold border border-slate-700 transition"
-              title="Masuk ke Panel POS Kasir / Admin"
+              onClick={onOpenLogin || onReturnToAdmin}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black shadow-md shadow-amber-500/20 transition cursor-pointer"
+              title="Portal Login Staf Kasir & Admin POS"
             >
-              Admin POS
+              <Lock className="w-3.5 h-3.5 text-slate-950" />
+              <span>Masuk Admin POS</span>
             </button>
           </div>
         </div>
@@ -461,6 +471,14 @@ export const PublicWebsite: React.FC<{ onReturnToAdmin: () => void }> = ({ onRet
                   <MessageCircle className="w-4 h-4" />
                   <span>Chat WhatsApp</span>
                 </a>
+                <button
+                  onClick={onOpenLogin || onReturnToAdmin}
+                  className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-amber-300 hover:text-amber-200 border border-slate-700 hover:border-amber-500/50 font-bold text-sm shadow-md flex items-center gap-2 transition cursor-pointer"
+                  title="Masuk ke Panel Staf Kasir POS"
+                >
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <span>Login Staf POS</span>
+                </button>
               </div>
             </div>
           </section>
@@ -570,24 +588,201 @@ export const PublicWebsite: React.FC<{ onReturnToAdmin: () => void }> = ({ onRet
             </div>
           </section>
 
-          {/* Store Location Map & Social Footer */}
-          <section className="bg-slate-100 py-10 px-4 border-t border-slate-200">
-            <div className="max-w-4xl mx-auto text-center space-y-3">
-              <h3 className="font-bold text-base text-slate-900">Kopi 99 Warungboto, Yogyakarta</h3>
-              <p className="text-xs text-slate-600">{settings.address}</p>
-              <div className="flex justify-center gap-3 pt-2">
+          {/* WHY CHOOSE KOPI 99 / KEUNGGULAN */}
+          <section className="py-14 px-4 bg-slate-900 text-white">
+            <div className="max-w-6xl mx-auto space-y-10">
+              <div className="text-center max-w-2xl mx-auto space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                  Keistimewaan Kami
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+                  Kenapa Selalu Kembali ke Kopi 99?
+                </h2>
+                <p className="text-slate-400 text-xs sm:text-sm">
+                  Komitmen kami menyajikan racikan kopi dan matcha terbaik dengan suasana hangat di Warungboto.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                    <Coffee className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-white">Fresh Roast Biji Merapi</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    House blend pilihan dari roastery lokal lereng Gunung Merapi dengan ekstraksi presisi rasio emas espresso.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-white">Bahan Baku Asli & Segar</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Gula aren cair asli Kulon Progo dan ceremonial Uji matcha Jepang. Tanpa pengawet dan pemanis sintetis.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                    <Wifi className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-white">Wi-Fi Kencang & Stopkontak</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Koneksi internet cepat 100 Mbps dan stopkontak di setiap sudut meja. Nyaman untuk WFC, skripsian, atau santai.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+                    <ShoppingBag className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-white">Pesan Cepat via WhatsApp</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Pilih menu favoritmu langsung dari web, sistem otomatis membuat format pesan pesanan rapi untuk barista.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* CUSTOMER TESTIMONIALS */}
+          <section className="py-12 px-4 max-w-6xl mx-auto space-y-8">
+            <div className="text-center max-w-xl mx-auto space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                Ulasan Pelanggan
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Kata Sahabat Kopi 99
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                <div className="flex items-center gap-1 text-amber-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed italic">
+                  "Es Kopi Susu 99 rasanya pas banget di lidah, rasa kopinya bold tapi susunya creamy gurih. Tempatnya adem dan baristanya ramah banget!"
+                </p>
+                <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
+                    D
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block leading-none">Dimas Prasetyo</span>
+                    <span className="text-[10px] text-slate-400">Mahasiswa UAD Warungboto</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                <div className="flex items-center gap-1 text-amber-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed italic">
+                  "Matcha latte-nya otentik dan kerasa banget teh hijaunya, bukan cuma bubuk manis doang. Roti panggang kayanya juga enak banget buat camilan sore."
+                </p>
+                <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center">
+                    S
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block leading-none">Sarah Amalia</span>
+                    <span className="text-[10px] text-slate-400">Pelanggan Setia Yogyakarta</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                <div className="flex items-center gap-1 text-amber-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed italic">
+                  "Bisa order via web terus dikirim ke kantor lewat WhatsApp, proses konfirmasinya cepat banget. Kalau butuh tempat nugas santai, ini rekomendasi nomor satu."
+                </p>
+                <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center">
+                    A
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block leading-none">Agung Nugroho</span>
+                    <span className="text-[10px] text-slate-400">WFC Freelancer</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* STORE LOCATION MAP & FOOTER */}
+          <section className="bg-slate-100 py-12 px-4 border-t border-slate-200">
+            <div className="max-w-4xl mx-auto text-center space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-800 text-xs font-bold">
+                <Store className="w-4 h-4 text-amber-600" />
+                <span>Kunjungi Kedai Offline Kami</span>
+              </div>
+              <h3 className="font-extrabold text-xl text-slate-900">{settings.business_name}</h3>
+              <p className="text-xs text-slate-600 max-w-md mx-auto">{settings.address}</p>
+              <div className="flex flex-wrap justify-center gap-3 pt-2">
                 <a
                   href={settings.google_maps_url || 'https://maps.google.com/?q=Warungboto+Yogyakarta'}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5"
+                  className="px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition flex items-center gap-1.5"
                 >
                   <MapPin className="w-3.5 h-3.5 text-red-500" />
-                  <span>Buka di Google Maps</span>
+                  <span>Buka Petunjuk Arah di Google Maps</span>
+                </a>
+                <a
+                  href={`https://wa.me/${settings.whatsapp_number}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-1.5"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>WhatsApp: {settings.whatsapp_number}</span>
                 </a>
               </div>
             </div>
           </section>
+
+          {/* PUBLIC FOOTER */}
+          <footer className="bg-slate-950 text-slate-400 py-8 px-4 border-t border-slate-900">
+            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-600 text-white font-black text-sm flex items-center justify-center">
+                  99
+                </div>
+                <div>
+                  <span className="font-bold text-slate-200 block">{settings.business_name}</span>
+                  <span className="text-[11px] text-slate-500">© 2026 K99 Coffee & Beverages. Warungboto, DIY.</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setActiveTab('menu')}
+                  className="hover:text-white transition"
+                >
+                  Katalog Menu
+                </button>
+                <button
+                  onClick={onOpenLogin || onReturnToAdmin}
+                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-800 hover:border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition"
+                >
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Portal Staf Kasir / Admin</span>
+                </button>
+              </div>
+            </div>
+          </footer>
         </main>
       )}
 

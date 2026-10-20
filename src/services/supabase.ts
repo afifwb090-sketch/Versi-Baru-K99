@@ -5,9 +5,10 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Environment validation
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Safe environment check for both Vite browser and Node test runner
+const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' && process.env ? process.env : {});
+const supabaseUrl = (env.VITE_SUPABASE_URL as string) || '';
+const supabaseKey = (env.VITE_SUPABASE_PUBLISHABLE_KEY as string) || (env.VITE_SUPABASE_ANON_KEY as string) || '';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&

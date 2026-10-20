@@ -1,12 +1,13 @@
 /**
  * K99 POS System - Kopi 99 Warungboto
- * Main Application Shell & View Routing
+ * Main Application Shell, Landing Page & View Routing
  */
 
 import React, { useState } from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/common/Navbar';
 import { Sidebar } from './components/common/Sidebar';
+import { LoginModal } from './components/auth/LoginModal';
 import { PosView } from './components/pos/PosView';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { OnlineOrdersView } from './components/online/OnlineOrdersView';
@@ -22,15 +23,45 @@ import { CustomersView } from './components/customers/CustomersView';
 import { SettingsView } from './components/settings/SettingsView';
 import { PublicWebsite } from './components/public/PublicWebsite';
 
-export default function App() {
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+
+  // DEFAULT ENTRY POINT IS PUBLIC LANDING PAGE (Website Kedai Kopi 99 Warungboto)
+  const [isPublicMode, setIsPublicMode] = useState<boolean>(true);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+
   const [activeTab, setActiveTab] = useState<string>('pos');
-  const [isPublicMode, setIsPublicMode] = useState<boolean>(false);
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState<boolean>(false);
 
+  const handleOpenAdminPortal = () => {
+    if (isAuthenticated) {
+      setIsPublicMode(false);
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setIsLoginModalOpen(false);
+    setIsPublicMode(false);
+  };
+
   return (
-    <AuthProvider>
+    <>
       {isPublicMode ? (
-        <PublicWebsite onReturnToAdmin={() => setIsPublicMode(false)} />
+        <PublicWebsite
+          onReturnToAdmin={handleOpenAdminPortal}
+          onOpenLogin={handleOpenAdminPortal}
+        />
+      ) : !isAuthenticated ? (
+        // Guard if in admin mode without active authentication
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+          <LoginModal
+            isOpen={true}
+            onClose={() => setIsPublicMode(true)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        </div>
       ) : (
         <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
           {/* Top Bar */}
@@ -70,6 +101,21 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* LOGIN MODAL (Can be opened from Landing Page or Staff Button) */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
     </AuthProvider>
   );
 }

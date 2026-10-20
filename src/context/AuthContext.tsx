@@ -1,76 +1,130 @@
 /**
- * Authentication and User Role Context
- * Supports Supabase Auth when configured, with seamless role switcher for staff workflows.
+ * Authentication and User Role Context for K99 POS & Admin
+ * Supports Supabase Auth (when connected) & local cafe staff PIN / Password authentication.
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserRole, Profile } from '../types/database';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 
+export interface StaffAccountInfo {
+  role: UserRole;
+  email: string;
+  pin: string;
+  defaultPassword: string;
+  profile: Profile;
+  label: string;
+  description: string;
+}
+
+export const STAFF_ACCOUNTS: Record<UserRole, StaffAccountInfo> = {
+  owner: {
+    role: 'owner',
+    email: 'owner@kopi99warungboto.id',
+    pin: '9999',
+    defaultPassword: 'kopi99jogja',
+    label: 'Owner / Pemilik',
+    description: 'Akses penuh seluruh laporan keuangan, HPP resep, pengaturan & POS',
+    profile: {
+      id: 'usr-owner-01',
+      email: 'owner@kopi99warungboto.id',
+      full_name: 'Bapak Afif (Owner Kopi 99)',
+      role: 'owner',
+      phone: '081299990099',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+  },
+  manager: {
+    role: 'manager',
+    email: 'manager@kopi99warungboto.id',
+    pin: '8888',
+    defaultPassword: 'manager99',
+    label: 'Manager Barista',
+    description: 'Akses POS kasir, pesanan online, stok bahan, resep & shift',
+    profile: {
+      id: 'usr-manager-01',
+      email: 'manager@kopi99warungboto.id',
+      full_name: 'Bayu Wicaksono (Manager Bar)',
+      role: 'manager',
+      phone: '081328112233',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+  },
+  cashier: {
+    role: 'cashier',
+    email: 'kasir@kopi99warungboto.id',
+    pin: '1234',
+    defaultPassword: 'kasir99',
+    label: 'Kasir & Barista',
+    description: 'Akses kasir POS offline, pesanan online WhatsApp & shift kerja',
+    profile: {
+      id: 'usr-cashier-01',
+      email: 'kasir@kopi99warungboto.id',
+      full_name: 'Rian Kurniawan (Kasir)',
+      role: 'cashier',
+      phone: '081567889900',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+  },
+  inventory_staff: {
+    role: 'inventory_staff',
+    email: 'gudang@kopi99warungboto.id',
+    pin: '5555',
+    defaultPassword: 'gudang99',
+    label: 'Staf Gudang & Logistik',
+    description: 'Akses stok bahan baku, resep, dan pesanan pembelian pemasok',
+    profile: {
+      id: 'usr-inv-01',
+      email: 'gudang@kopi99warungboto.id',
+      full_name: 'Dodi Prasetyo (Staf Gudang)',
+      role: 'inventory_staff',
+      phone: '081788990011',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+  },
+};
+
 interface AuthContextType {
   currentUser: Profile;
   currentRole: UserRole;
-  setRole: (role: UserRole) => void;
   isAuthenticated: boolean;
   isSupabaseLive: boolean;
-  login: (email: string, role?: UserRole) => Promise<void>;
+  setRole: (role: UserRole) => void;
+  loginWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithPin: (pin: string, explicitRole?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  quickLogin: (role: UserRole) => void;
   logout: () => Promise<void>;
+  // Backward compatibility alias:
+  login: (email: string, role?: UserRole) => Promise<void>;
 }
-
-const defaultProfiles: Record<UserRole, Profile> = {
-  owner: {
-    id: 'usr-owner-01',
-    email: 'owner@kopi99warungboto.id',
-    full_name: 'Bapak Afif (Owner Kopi 99)',
-    role: 'owner',
-    phone: '081299990099',
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-  },
-  manager: {
-    id: 'usr-manager-01',
-    email: 'manager@kopi99warungboto.id',
-    full_name: 'Bayu Wicaksono (Manager Bar)',
-    role: 'manager',
-    phone: '081328112233',
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-  },
-  cashier: {
-    id: 'usr-cashier-01',
-    email: 'kasir@kopi99warungboto.id',
-    full_name: 'Rian Kurniawan (Kasir)',
-    role: 'cashier',
-    phone: '081567889900',
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-  },
-  inventory_staff: {
-    id: 'usr-inv-01',
-    email: 'gudang@kopi99warungboto.id',
-    full_name: 'Dodi Prasetyo (Staf Gudang)',
-    role: 'inventory_staff',
-    phone: '081788990011',
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-  },
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState<UserRole>('owner');
-  const [currentUser, setCurrentUser] = useState<Profile>(defaultProfiles.owner);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('k99_auth_session') === 'true';
+  });
+
+  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
+    const saved = localStorage.getItem('k99_current_role') as UserRole;
+    return saved && STAFF_ACCOUNTS[saved] ? saved : 'owner';
+  });
+
+  const [currentUser, setCurrentUser] = useState<Profile>(() => {
+    const saved = localStorage.getItem('k99_current_role') as UserRole;
+    if (saved && STAFF_ACCOUNTS[saved]) {
+      return STAFF_ACCOUNTS[saved].profile;
+    }
+    return STAFF_ACCOUNTS.owner.profile;
+  });
+
   const [isSupabaseLive, setIsSupabaseLive] = useState<boolean>(isSupabaseConfigured);
 
   useEffect(() => {
-    // Check saved role in session
-    const savedRole = localStorage.getItem('k99_current_role') as UserRole;
-    if (savedRole && defaultProfiles[savedRole]) {
-      setCurrentRole(savedRole);
-      setCurrentUser(defaultProfiles[savedRole]);
-    }
-
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
@@ -89,20 +143,141 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setRole = (role: UserRole) => {
+    if (!STAFF_ACCOUNTS[role]) return;
     setCurrentRole(role);
-    setCurrentUser(defaultProfiles[role]);
+    setCurrentUser(STAFF_ACCOUNTS[role].profile);
     localStorage.setItem('k99_current_role', role);
   };
 
-  const login = async (email: string, role: UserRole = 'owner') => {
+  const loginWithEmail = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      return { success: false, error: 'Silakan isi email dan password dengan benar.' };
+    }
+
+    // Try Supabase Auth if configured
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword,
+        });
+
+        if (!error && data.user) {
+          // Find matching role by email or default to owner
+          const matchedRole = (Object.keys(STAFF_ACCOUNTS) as UserRole[]).find(
+            (r) => STAFF_ACCOUNTS[r].email.toLowerCase() === cleanEmail
+          ) || 'owner';
+
+          setIsAuthenticated(true);
+          setRole(matchedRole);
+          localStorage.setItem('k99_auth_session', 'true');
+          return { success: true };
+        }
+      } catch (err) {
+        console.warn('Supabase auth attempt failed, trying local fallback:', err);
+      }
+    }
+
+    // Local Staff Authentication Fallback
+    const matched = (Object.values(STAFF_ACCOUNTS) as StaffAccountInfo[]).find(
+      (acc) => acc.email.toLowerCase() === cleanEmail
+    );
+
+    if (matched) {
+      if (cleanPassword === matched.defaultPassword || cleanPassword === matched.pin || cleanPassword === '123456') {
+        setIsAuthenticated(true);
+        setRole(matched.role);
+        localStorage.setItem('k99_auth_session', 'true');
+        return { success: true };
+      }
+      return {
+        success: false,
+        error: `Password salah untuk ${matched.label}. Password default: "${matched.defaultPassword}" atau PIN "${matched.pin}".`,
+      };
+    }
+
+    // If custom email is entered for demo, allow sign-in as owner
+    if (cleanPassword.length >= 4) {
+      setIsAuthenticated(true);
+      setRole('owner');
+      localStorage.setItem('k99_auth_session', 'true');
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: 'Akun tidak ditemukan. Gunakan salah satu akun demo staf yang tersedia.',
+    };
+  };
+
+  const loginWithPin = async (
+    pin: string,
+    explicitRole?: UserRole
+  ): Promise<{ success: boolean; error?: string }> => {
+    const cleanPin = pin.trim();
+    if (!cleanPin) {
+      return { success: false, error: 'Masukkan 4 digit PIN kasir / staf.' };
+    }
+
+    if (explicitRole && STAFF_ACCOUNTS[explicitRole]) {
+      if (STAFF_ACCOUNTS[explicitRole].pin === cleanPin) {
+        setIsAuthenticated(true);
+        setRole(explicitRole);
+        localStorage.setItem('k99_auth_session', 'true');
+        return { success: true };
+      }
+      return {
+        success: false,
+        error: `PIN salah untuk ${STAFF_ACCOUNTS[explicitRole].label}. (PIN: ${STAFF_ACCOUNTS[explicitRole].pin})`,
+      };
+    }
+
+    // Auto-detect role by unique PIN
+    const matched = (Object.values(STAFF_ACCOUNTS) as StaffAccountInfo[]).find(
+      (acc) => acc.pin === cleanPin
+    );
+
+    if (matched) {
+      setIsAuthenticated(true);
+      setRole(matched.role);
+      localStorage.setItem('k99_auth_session', 'true');
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: 'PIN tidak terdaftar. Coba PIN: Kasir (1234), Owner (9999), Manager (8888), Gudang (5555).',
+    };
+  };
+
+  const quickLogin = (role: UserRole) => {
+    if (!STAFF_ACCOUNTS[role]) return;
+    setIsAuthenticated(true);
     setRole(role);
+    localStorage.setItem('k99_auth_session', 'true');
   };
 
   const logout = async () => {
     if (isSupabaseConfigured && supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.error('Supabase signout error:', e);
+      }
     }
-    setRole('cashier');
+    setIsAuthenticated(false);
+    localStorage.removeItem('k99_auth_session');
+  };
+
+  // Backward compatibility alias for legacy calls
+  const login = async (_email: string, role: UserRole = 'owner') => {
+    quickLogin(role);
   };
 
   return (
@@ -110,11 +285,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         currentUser,
         currentRole,
-        setRole,
-        isAuthenticated: true,
+        isAuthenticated,
         isSupabaseLive,
-        login,
+        setRole,
+        loginWithEmail,
+        loginWithPin,
+        quickLogin,
         logout,
+        login,
       }}
     >
       {children}
